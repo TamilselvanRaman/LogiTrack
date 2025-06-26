@@ -1,16 +1,10 @@
-const express = require("express");
-const Cargo = require("../models/Cargo");
-const auth = require("../middleware/auth");
-const router = express.Router();
-const User = require("../models/User");
+const Cargo = require("../models/CargoModel");
+const User = require("../models/UserModel");
 
-// Add new cargo (Business only)
-// Add cargo (only for Business users)
-router.post("/", auth, async (req, res) => {
+exports.addCargo = async (req, res) => {
   try {
     const { name, type, size, weight, origin, destination } = req.body;
 
-    console.log("User role is:", req.user.role);
     if (req.user.role !== "business") {
       return res
         .status(403)
@@ -32,38 +26,92 @@ router.post("/", auth, async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-});
+};
 
-// GET /available-driver (Business only)
-router.get("/available-driver", auth, async (req, res) => {
+// Update cargo (business only)
+exports.updateCargo = async (req, res) => {
   try {
-    // Check if user is a business user
+    if (req.user.role !== "business") {
+      return res
+        .status(403)
+        .json({ msg: "Access denied. Only Business users can update cargo." });
+    }
+
+    const cargoId = req.params.id;
+    const updateData = req.body;
+
+    // Find cargo and check if it belongs to this business user
+    const cargo = await Cargo.findById(cargoId);
+    if (!cargo) return res.status(404).json({ msg: "Cargo not found" });
+
+    if (cargo.businessId.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ msg: "You can update only your own cargos" });
+    }
+
+    // Update cargo fields
+    Object.assign(cargo, updateData);
+    await cargo.save();
+
+    res.status(200).json(cargo);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Delete cargo (business only)
+exports.deleteCargo = async (req, res) => {
+  try {
+    if (req.user.role !== "business") {
+      return res
+        .status(403)
+        .json({ msg: "Access denied. Only Business users can delete cargo." });
+    }
+
+    const cargoId = req.params.id;
+
+    // Find cargo and check if it belongs to this business user
+    const cargo = await Cargo.findById(cargoId);
+    if (!cargo) return res.status(404).json({ msg: "Cargo not found" });
+
+    if (cargo.businessId.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ msg: "You can delete only your own cargos" });
+    }
+
+    await cargo.deleteOne();
+
+    res.status(200).json({ msg: "Cargo deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+exports.getAvailableDrivers = async (req, res) => {
+  try {
     if (req.user.role !== "business") {
       return res.status(403).json({ message: "Access denied. Business only." });
     }
 
-    // Fetch all users with the "driver" role
     const drivers = await User.find({ role: "driver" }).select("-password");
-
     res.status(200).json({ drivers });
   } catch (error) {
-    console.error("Error fetching available drivers:", error);
     res.status(500).json({ message: "Server error" });
   }
-});
+};
 
-// Get cargos created by the logged-in business user
-router.get("/business", auth, async (req, res) => {
+exports.getBusinessCargos = async (req, res) => {
   try {
     const cargos = await Cargo.find({ businessId: req.user.id });
     res.json(cargos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
 
-// Assign cargo to a driver (Business only)
-router.post("/:id/assign", auth, async (req, res) => {
+exports.assignCargoToDriver = async (req, res) => {
   try {
     const { driverId } = req.body;
     const cargo = await Cargo.findByIdAndUpdate(
@@ -75,20 +123,18 @@ router.post("/:id/assign", auth, async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-});
+};
 
-// Get all available (unassigned) cargos (Driver)
-router.get("/available", auth, async (req, res) => {
+exports.getAvailableCargos = async (req, res) => {
   try {
     const cargos = await Cargo.find({ driverId: null });
     res.json(cargos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
 
-// Driver accepts cargo
-router.post("/:id/accept", auth, async (req, res) => {
+exports.acceptCargo = async (req, res) => {
   try {
     const cargo = await Cargo.findById(req.params.id);
     if (!cargo) return res.status(404).json({ error: "Cargo not found" });
@@ -101,20 +147,18 @@ router.post("/:id/accept", auth, async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-});
+};
 
-// Get cargos assigned to the current driver
-router.get("/assigned", auth, async (req, res) => {
+exports.getAssignedCargos = async (req, res) => {
   try {
     const cargos = await Cargo.find({ driverId: req.user.id });
     res.json(cargos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
 
-// Update cargo status (Driver)
-router.patch("/:id/status", auth, async (req, res) => {
+exports.updateCargoStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const cargo = await Cargo.findByIdAndUpdate(
@@ -126,10 +170,9 @@ router.patch("/:id/status", auth, async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-});
+};
 
-// Update cargo location (Driver)
-router.patch("/:id/location", auth, async (req, res) => {
+exports.updateCargoLocation = async (req, res) => {
   try {
     const { location } = req.body;
     const cargo = await Cargo.findByIdAndUpdate(
@@ -141,10 +184,9 @@ router.patch("/:id/location", auth, async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-});
+};
 
-// Track cargo (All roles)
-router.get("/:id", auth, async (req, res) => {
+exports.trackCargo = async (req, res) => {
   try {
     const cargo = await Cargo.findById(req.params.id);
     if (!cargo) return res.status(404).json({ error: "Cargo not found" });
@@ -152,7 +194,4 @@ router.get("/:id", auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
-
-
-module.exports = router;
+};

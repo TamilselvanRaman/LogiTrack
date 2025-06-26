@@ -30,7 +30,10 @@ const Navbar = () => {
         <div className="flex items-center gap-6">
           {user ? (
             <>
-              <div className="flex items-center gap-2 text-gray-800">
+              <div
+                onClick={() => navigate("/profile")}
+                className="flex items-center gap-2 text-gray-800 hover:text-blue-600 cursor-pointer transition"
+              >
                 <FaUserCircle className="text-blue-600 text-2xl drop-shadow-sm" />
                 <span className="text-base font-semibold capitalize">
                   {user?.username}

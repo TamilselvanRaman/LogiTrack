@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { FaPlus, FaTruckMoving, FaSearch, FaHome } from "react-icons/fa";
+import { FaPlus, FaTruckMoving, FaSearch, FaHome,  } from "react-icons/fa";
+import { RiTruckFill } from "react-icons/ri";
+import { GiCargoCrate } from "react-icons/gi";
 import { useNavigate } from "react-router-dom";
 import AddCargo from "../cargo/AddCargo";
 import AssignCargo from "../cargo/AssignCargo";
 import ViewCargoStatus from "../cargo/ViewCargoStatus";
+
 
 const BusinessDashboard = () => {
   const [activeView, setActiveView] = useState("add");
@@ -31,13 +34,13 @@ const BusinessDashboard = () => {
         </h2>
         <nav className="flex flex-col gap-4">
           <SidebarButton
-            icon={<FaPlus />}
-            label="Add Cargo"
+            icon={<GiCargoCrate/>}
+            label="Cargo Management"
             isActive={activeView === "add"}
             onClick={() => setActiveView("add")}
           />
           <SidebarButton
-            icon={<FaTruckMoving />}
+            icon={<RiTruckFill />}
             label="Assign Cargo"
             isActive={activeView === "assign"}
             onClick={() => setActiveView("assign")}

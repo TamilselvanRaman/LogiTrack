@@ -1,6 +1,7 @@
 import http from "./http.service";
 
 const API_URL = "/auth";
+const USER_URL = "/user"
 
 // Register new user
 const register = async (userData) => {
@@ -47,10 +48,24 @@ const getToken = () => {
   return localStorage.getItem("token");
 };
 
+// Fetch user profile + cargos
+const getProfile = async () => {
+  const res = await http.get(`${USER_URL}/profile`);
+  return res.data;
+};
+
+// Update user profile (contact, address) + get updated profile + cargos
+const updateProfile = async (profileData) => {
+  const res = await http.put(`${USER_URL}/profile/update`, profileData);
+  return res.data;
+};
+
 export default {
   register,
   login,
   logout,
   getCurrentUser,
   getToken,
+  getProfile,
+  updateProfile,
 };

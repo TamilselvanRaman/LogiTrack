@@ -13,7 +13,10 @@ const http = axios.create({
 http.interceptors.request.use((config) => {
   const token = authService.getToken();
   if (token) {
+    console.log("Sending token:", token);
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.log("No token available");
   }
   return config;
 });

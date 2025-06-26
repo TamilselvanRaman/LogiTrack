@@ -16,6 +16,7 @@ import Unauthorized from "./pages/Unauthorized";
 import Home from "./pages/Home";
 import Navbar from "./components/layout/Navbar";
 import Dashboard from "./components/dashboard/Dashboard";
+import UserProfile from "./components/profile/UserProfile"; // adjust the path if needed
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -55,6 +56,17 @@ function AppWrapper() {
             </PageWrapper>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <PageWrapper>
+                <UserProfile />
+              </PageWrapper>
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/unauthorized"
           element={

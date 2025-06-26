@@ -18,11 +18,13 @@ app.use(express.json());
 
 // Routes
 const authRoutes = require("./routes/auth");
-const cargoRoutes = require("./routes/cargos");
+const cargoRoutes = require("./routes/cargoRoutes");
+const UserProfile = require("./routes/userRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cargos", cargoRoutes);
+app.use("/api/user", UserProfile);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port localhost:${PORT}`));

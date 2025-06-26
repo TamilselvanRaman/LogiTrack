@@ -1,4 +1,3 @@
-// models/User.js
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
@@ -16,6 +15,8 @@ const userSchema = new mongoose.Schema(
       enum: ["business", "driver", "customer"],
       required: true,
     },
+    contact: { type: String, default: "" },
+    address: { type: String, default: "" },
   },
   { timestamps: true }
 );
