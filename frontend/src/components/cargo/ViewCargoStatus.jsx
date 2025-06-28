@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { trackCargo, getOwnCargo } from "../../services/cargo.service";
 import { MapPin, Box, Ruler, BadgeInfo, Truck, Search } from "lucide-react";
+import { toast } from "react-toastify";
 
-// Reverse geocoding using OpenStreetMap
 const reverseGeocode = async (lat, lon) => {
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "LogiTrackApp/1.0 (contact@example.com)",
-      },
-    });
+    if (
+      typeof lat !== "number" ||
+      typeof lon !== "number" ||
+      isNaN(lat) ||
+      isNaN(lon)
+    ) {
+      throw new Error("Invalid coordinates");
+    }
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+      {
+        headers: {
+          "User-Agent": "LogiTrackApp/1.0 (contact@example.com)",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Nominatim error: ${response.status}`);
+    }
+
     const data = await response.json();
-    return data.display_name;
+    return data.display_name || "Unknown Location";
   } catch (err) {
-    console.error("Reverse geocoding failed:", err);
+    console.warn("Reverse geocoding failed:", err.message);
     return "Unknown Location";
   }
 };
@@ -33,7 +49,10 @@ const ViewCargoStatus = () => {
   const fetchCargo = async () => {
     try {
       const data = await getOwnCargo();
-      setAvailableCargo(data);
+      const NotDeliveredCargos = data.filter(
+        (c) => (c.status || "").toUpperCase() !== "DELIVERED"
+      );
+      setAvailableCargo(NotDeliveredCargos);
     } catch (err) {
       console.error("Failed to fetch cargo:", err);
     }
@@ -46,16 +65,19 @@ const ViewCargoStatus = () => {
       setLocationName("");
 
       const data = await trackCargo(cargoId.trim());
-      if (data?._id) {
-        setCargo(data);
+      if (!data || Object.keys(data).length === 0) {
+        toast.error("This cargo is already delivered.");
+        return;
+      }
 
-        if (data.location) {
-          const [lat, lon] = data.location.split(",").map(Number);
+      setCargo(data);
+
+      if (data.location) {
+        const [lat, lon] = data.location.split(",").map(Number);
+        if (!isNaN(lat) && !isNaN(lon)) {
           const place = await reverseGeocode(lat, lon);
           setLocationName(place);
         }
-      } else {
-        throw new Error("Cargo not found");
       }
     } catch (err) {
       setError("Cargo not found or error fetching data.");
@@ -64,7 +86,7 @@ const ViewCargoStatus = () => {
   };
 
   const getStatusStyle = (status) => {
-    switch (status?.toUpperCase()) {
+    switch ((status || "").toUpperCase()) {
       case "DELIVERED":
         return "bg-green-100 text-green-800 border-green-400";
       case "IN_TRANSIT":
@@ -80,12 +102,11 @@ const ViewCargoStatus = () => {
     status?.replace("_", " ").toUpperCase() || "UNKNOWN";
 
   return (
-    <div className=" flex items-center justify-center px-4 py-10 bg-gradient-to-br ">
+    <div className="flex items-center justify-center px-4 py-10 bg-gradient-to-br">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl border border-gray-200">
-        <h2 className="text-4xl font-bold text-center text-blue-800 mb-6 flex items-center justify-center gap-2">
-         
+        <h2 className="text-4xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
           Track Your Cargo
-           <Truck className="w-10 h-10 mt-2 text-blue-800" />
+          <Truck className="w-10 h-10 mt-2 text-blue-700" />
         </h2>
 
         <div className="space-y-5">

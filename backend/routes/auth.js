@@ -31,35 +31,44 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login route
+// Login route with cookie
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Find user with password (select explicitly since password: false in schema)
     const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Check password
     const isMatch = await user.matchPassword(password);
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    // Create JWT token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // Exclude password from response user object
-    const { password: _, ...userInfo } = user.toObject();
+    // ✅ Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
-    res.json({ token, user: userInfo });
+    // Send user info only
+    const { password: _, ...userInfo } = user.toObject();
+    res.json({ user: userInfo });
   } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
+});
+
+router.post("/logout", (req, res) => {
+  // Clear any cookies or session if used (optional)
+  // Example: res.clearCookie('token');
+  res.status(200).json({ message: "Logout successful" });
 });
 
 module.exports = router;

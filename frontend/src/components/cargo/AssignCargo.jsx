@@ -4,12 +4,15 @@ import {
   assignCargo,
   getAvailableDrivers,
 } from "../../services/cargo.service";
+import { toast, Toaster } from "react-hot-toast";
+import { User, Truck, Loader2 } from "lucide-react";
 
 const AssignCargo = () => {
   const [cargos, setCargos] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [selectedDriverId, setSelectedDriverId] = useState("");
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
+  const [assigningCargoId, setAssigningCargoId] = useState(null);
 
   useEffect(() => {
     fetchCargo();
@@ -19,119 +22,183 @@ const AssignCargo = () => {
   const fetchCargo = async () => {
     try {
       const data = await getOwnCargo();
-      const unassigned = data.filter((c) => !c.driverId);
-      console.log("Unassigned", unassigned);
-      setCargos(unassigned);
+      setCargos(data);
     } catch (err) {
+      toast.error("Failed to fetch cargo.");
       console.error("Failed to fetch cargo:", err);
     }
   };
 
   const fetchDrivers = async () => {
     try {
-      const { drivers } = await getAvailableDrivers(); // Make sure response has `drivers` key
+      const { drivers } = await getAvailableDrivers();
       setDrivers(drivers);
     } catch (err) {
-      console.log("Failed to fetch drivers:", err);
+      toast.error("Failed to fetch drivers.");
+      console.error("Failed to fetch drivers:", err);
     }
+  };
+
+  const DriverAvailable = () => {
+    if (drivers.length === 0) {
+      toast.error("No drivers available.");
+    }
+  };
+
+  const isDriverAvailable = (driverId) => {
+    const driverCargos = cargos.filter((c) => c.driverId?._id === driverId);
+    if (driverCargos.length === 0) return true;
+    return driverCargos.every(
+      (c) => (c.status || "").toUpperCase() === "DELIVERED"
+    );
   };
 
   const handleAssign = async (cargoId) => {
     if (!selectedDriverId) {
-      alert("Please select a driver.");
+      toast.error("Please select a driver.");
       return;
     }
 
-    setLoading(true);
+    if (!isDriverAvailable(selectedDriverId)) {
+      toast.error("Driver already has active cargo.");
+      return;
+    }
+
+    setAssigningCargoId(cargoId);
     try {
       await assignCargo(cargoId, selectedDriverId);
-      alert("✅ Cargo assigned successfully");
-
-      // Update UI
-      setCargos((prev) =>
-        prev.map((cargo) =>
-          cargo._id === cargoId ? { ...cargo, driver: selectedDriverId } : cargo
-        )
-      );
-
-      setSelectedDriverId(""); // Reset selection
+      toast.success("Cargo assigned successfully!");
+      await fetchCargo(); // ✅ Refresh cargo
+      await fetchDrivers(); // ✅ Refresh driver list
+      setSelectedDriverId(""); // Reset selected
     } catch (err) {
-      alert("❌ Failed to assign cargo");
+      toast.error("Failed to assign cargo.");
       console.error(err);
     } finally {
-      setLoading(false);
+      setAssigningCargoId(null);
     }
   };
 
-  return (
-    <div className=" justify-center px-4 py-10 flex flex-col items-center">
-      <div className="w-full max-w-xl bg-white p-8 rounded-2xl shadow-md border border-gray-200">
-        <h2 className="text-3xl font-bold text-blue-700 mb-8 text-center">
-          Assign Cargo to Driver
-        </h2>
+  const unassignedCargos = cargos.filter((c) => !c.driverId);
+  const assignedCargos = cargos.filter((c) => c.driverId);
 
-        <div className="mb-6">
-          <label
-            htmlFor="driver"
-            className="block text-gray-700 mb-2 font-medium"
-          >
-            Select Driver
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-10">
+      <div className="w-full max-w-3xl bg-white border border-gray-200 rounded-2xl shadow-lg p-8">
+        <h1 className="text-4xl font-bold text-center text-blue-800 flex items-center justify-center gap-2 mb-8">
+          <Truck className="w-8 h-8" />
+          Assign Cargo
+        </h1>
+
+        {/* Driver Selector */}
+        <div className="mb-8">
+          <label className="block text-gray-700 font-semibold mb-2">
+            Select Available Driver
           </label>
           <select
-            id="driver"
+            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
             value={selectedDriverId}
             onChange={(e) => setSelectedDriverId(e.target.value)}
-            className="w-full p-3 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={DriverAvailable}
           >
             <option value="">-- Choose a Driver --</option>
-            {drivers.map((driver) => (
-              <option key={driver._id} value={driver._id}>
-                {driver.username}
-              </option>
-            ))}
+            {drivers.map((driver) => {
+              const available = isDriverAvailable(driver._id);
+              return (
+                <option
+                  key={driver._id}
+                  value={driver._id}
+                  disabled={!available}
+                >
+                  {driver.username} {!available ? "(Unavailable)" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
 
+        <Toaster
+          position="top-right"
+        />
+
         {cargos.length === 0 ? (
-          <p className="text-gray-500 text-center">
-            No unassigned cargo found.
-          </p>
+          <p className="text-gray-500 text-center">No cargo available.</p>
         ) : (
-          <div className="space-y-5">
-            {cargos.map((cargo) => {
-              const isAssigned = !!cargo.driver;
-              return (
-                <div
-                  key={cargo._id}
-                  className="bg-gray-50 border border-gray-200 p-5 rounded-lg shadow-sm flex justify-between items-start"
-                >
-                  <div>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {cargo.content}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Size: {cargo.size} | Status:{" "}
-                      <span className="font-medium capitalize">
-                        {cargo.status}
-                      </span>
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleAssign(cargo._id)}
-                    disabled={loading || isAssigned}
-                    className={`px-4 py-2 mt-1 rounded-md font-medium transition-colors ${
-                      isAssigned
-                        ? "bg-green-400 text-white cursor-not-allowed"
-                        : loading
-                          ? "bg-blue-300 text-white cursor-not-allowed"
-                          : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
+          <div className="space-y-6">
+            {/* Unassigned Cargos */}
+            {unassignedCargos.length > 0 && (
+              <>
+                <h2 className="text-lg font-semibold text-gray-800 border-b pb-1">
+                  🚚 Unassigned Cargos
+                </h2>
+                {unassignedCargos.map((cargo) => (
+                  <div
+                    key={cargo._id}
+                    className="bg-blue-50 border border-blue-200 p-5 rounded-lg shadow-sm flex justify-between items-center"
                   >
-                    {isAssigned ? "Assigned" : "Assign"}
-                  </button>
-                </div>
-              );
-            })}
+                    <div>
+                      <h3 className="text-md font-semibold text-blue-900">
+                        {cargo.name}
+                      </h3>
+                      <p className="text-sm text-gray-700 mt-1">
+                        Size: <span className="font-medium">{cargo.size}</span>{" "}
+                        | Status:{" "}
+                        <span className="text-yellow-700 font-medium capitalize">
+                          {cargo.status || "Pending"}
+                        </span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleAssign(cargo._id)}
+                      disabled={assigningCargoId === cargo._id}
+                      className={`px-5 py-2 rounded-lg text-white font-medium flex items-center gap-2 ${
+                        assigningCargoId === cargo._id
+                          ? "bg-blue-300 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      }`}
+                    >
+                      {assigningCargoId === cargo._id ? (
+                        <Loader2 className="animate-spin w-4 h-4" />
+                      ) : (
+                        <User className="w-4 h-4" />
+                      )}
+                      Assign
+                    </button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Already Assigned */}
+            {assignedCargos.length > 0 && (
+              <>
+                <h2 className="text-lg font-semibold text-gray-800 mt-10 border-b pb-1">
+                  ✅ Already Assigned
+                </h2>
+                {assignedCargos.map((cargo) => (
+                  <div
+                    key={cargo._id}
+                    className="bg-gray-50 border border-gray-200 p-5 rounded-lg flex justify-between items-center opacity-90"
+                  >
+                    <div>
+                      <h3 className="text-md font-semibold text-gray-800">
+                        {cargo.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Size: <span className="font-medium">{cargo.size}</span>{" "}
+                        | Status:{" "}
+                        <span className="font-semibold capitalize">
+                          {cargo.status}
+                        </span>
+                      </p>
+                    </div>
+                    <span className="px-4 py-1 rounded-full bg-green-400 text-white font-medium text-sm">
+                      Assigned
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>

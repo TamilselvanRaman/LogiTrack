@@ -65,68 +65,55 @@ const sliderSettings = {
 
 const locations = [
   {
-    src: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/3057960/pexels-photo-3057960.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "New York Hub",
     desc: "East Coast freight center.",
   },
   {
-    src: "https://images.unsplash.com/photo-1592496011288-98c06bde4ba4?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/378570/pexels-photo-378570.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Los Angeles Terminal",
     desc: "West Coast shipping point.",
   },
   {
-    src: "https://images.unsplash.com/photo-1605902711622-cfb43c4437d4?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/4215115/pexels-photo-4215115.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Chicago Distribution",
     desc: "Midwest central network.",
   },
   {
-    src: "https://images.unsplash.com/photo-1617957742854-641612cbb4fd?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/5738961/pexels-photo-5738961.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Houston Station",
     desc: "South-central logistics.",
   },
   {
-    src: "https://images.unsplash.com/photo-1549921296-3a6b63e70a3a?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/5063291/pexels-photo-5063291.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Seattle Dock",
     desc: "Pacific shipping gateway.",
   },
   {
-    src: "https://images.unsplash.com/photo-1581093588401-04b6e02f5d6f?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/1866149/pexels-photo-1866149.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Denver Point",
     desc: "Rocky Mountain region.",
   },
   {
-    src: "https://images.unsplash.com/photo-1535392432937-a27c01a512f4?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Atlanta Base",
     desc: "Southern US freight zone.",
   },
   {
-    src: "https://images.unsplash.com/photo-1605819204283-8619113e0773?auto=format&fit=crop&w=1200&q=80",
+    src: "https://images.pexels.com/photos/378570/pexels-photo-378570.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200",
     title: "Miami Port",
     desc: "Southeast coastal shipping.",
   },
 ];
 
+
 const Home = () => {
   return (
     <div className="bg-gray-50 min-h-screen font-sans">
       {/* Hero Section */}
-      <section className="h-[80vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center relative overflow-hidden">
-        {/* Animated background image */}
-        <motion.div
-          initial={{ scale: 1 }}
-          animate={{ scale: 1.05 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              "url('/banner.jgp')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-
+      <section className="homepage h-[80vh] bg-cover bg-center flex flex-col justify-center items-center text-white text-center relative overflow-hidden">
         {/* Overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
+        <div className="absolute inset-0 bg-black/60  z-0" />
 
         {/* Text Content */}
         <motion.div
@@ -307,7 +294,7 @@ const Home = () => {
                       alt={location.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-60 transition duration-300"></div>
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-opacity-60 transition duration-300"></div>
                     <div className="absolute bottom-0 w-full bg-white/80 backdrop-blur-md p-3 text-left">
                       <h3 className="text-lg font-semibold text-blue-800 mb-1">
                         {location.title}

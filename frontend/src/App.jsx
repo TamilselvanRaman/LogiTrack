@@ -22,6 +22,9 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import PageWrapper from "./components/common/PageWrapper";
 
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 function AppWrapper() {
   const location = useLocation();
   const hideNavbarOnPaths = ["/login", "/register", "/unauthorized"];
@@ -29,6 +32,7 @@ function AppWrapper() {
 
   return (
     <>
+     <ToastContainer position="top-right" autoClose={3000} />
       {!hideNavbar && <Navbar />}
 
       <Routes>
@@ -114,6 +118,7 @@ function AppWrapper() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
+       
       </Routes>
     </>
   );

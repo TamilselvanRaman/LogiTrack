@@ -1,84 +1,105 @@
+// services/cargo.service.js
 import http from "./http.service";
+const USER_URL = "/user";
 
-// 1. Add new cargo (Business role)
+//  Add new cargo
 export const addCargo = async (cargoData) => {
   const res = await http.post("/cargos", cargoData);
   return res.data;
 };
 
-// 2. Get available drivers (for assignment)
+//  Get all available drivers
 export const getAvailableDrivers = async () => {
   const res = await http.get("/cargos/available-driver");
   return res.data;
 };
 
-// 3. Get cargos created by the current business user
+//  Get cargos added by logged-in business user
 export const getOwnCargo = async () => {
   const res = await http.get("/cargos/business");
   return res.data;
 };
 
-// 4. Assign cargo to a specific driver
+//  Assign cargo to driver
 export const assignCargo = async (cargoId, driverId) => {
   const res = await http.post(`/cargos/${cargoId}/assign`, { driverId });
   return res.data;
 };
 
-// 5. Get all cargos (admin or for listing)
-export const getAllCargos = async () => {
-  const res = await http.get("/cargos");
-  return res.data;
-};
-
-// 6. Delete a cargo by ID
+//  Delete cargo by ID
 export const deleteCargoById = async (cargoId) => {
   const res = await http.delete(`/cargos/${cargoId}`);
   return res.data;
 };
 
+//  Update cargo by ID
 export const updateCargoById = async (cargoId, updatedData) => {
   const res = await http.put(`/cargos/${cargoId}`, updatedData);
   return res.data;
 };
 
-// 7. Alias assignCargoToDriver for easier naming in frontend
-export const assignCargoToDriver = async (cargoId, driverId) => {
-  const res = await http.post(`/cargos/${cargoId}/assign`, { driverId });
-  return res.data;
-};
-
-// 8. Get cargos available for drivers to accept
+//  Get cargos that are unassigned
 export const getAvailableCargo = async () => {
   const res = await http.get("/cargos/available");
   return res.data;
 };
 
-// 9. Driver accepts a cargo
+//  Driver accepts a cargo
 export const acceptCargo = async (cargoId) => {
   const res = await http.post(`/cargos/${cargoId}/accept`);
   return res.data;
 };
 
-// 10. Update status of a cargo (e.g., In Transit, Delivered)
+//  Update cargo status (Delivered/In-transit/etc.)
 export const updateStatus = async (cargoId, status) => {
   const res = await http.patch(`/cargos/${cargoId}/status`, { status });
   return res.data;
 };
 
-// 11. Update real-time location of a cargo
+//  Update cargo location (for tracking)
 export const updateLocation = async (cargoId, location) => {
   const res = await http.patch(`/cargos/${cargoId}/location`, { location });
   return res.data;
 };
 
-// 12. Track a cargo by ID
+//  Track a single cargo by ID
 export const trackCargo = async (cargoId) => {
   const res = await http.get(`/cargos/${cargoId}`);
   return res.data;
 };
 
-// 13. Get cargos assigned to the currently logged-in driver
+//  Get all cargos assigned to the logged-in driver
 export const getAssignedCargoForDriver = async () => {
   const res = await http.get("/cargos/assigned");
+  return res.data;
+};
+
+//  Get all cargos belonging to logged-in customer
+export const getCustomerCargos = async () => {
+  const res = await http.get("/cargos/customer");
+  return res.data;
+};
+
+//  Get all customers (for dropdown/selection)
+export const getCustomers = async () => {
+  const res = await http.get(`${USER_URL}/customers`);
+  return res.data;
+};
+
+// Accept a cargo request and create cargo
+export const acceptCargoRequest = async (requestId) => {
+  const res = await http.post(`/request/accept/${requestId}`);
+  return res.data;
+};
+
+//Reject a cargo request
+export const rejectCargoRequest = async (id) => {
+  const res = await http.patch(`/request/reject/${id}`);
+  return res.data;
+};
+
+// Get all pending requests
+export const getAllCargoRequests = async () => {
+  const res = await http.get("/request");
   return res.data;
 };

@@ -1,62 +1,59 @@
 import http from "./http.service";
 
 const API_URL = "/auth";
-const USER_URL = "/user"
+const USER_URL = "/user";
 
 // Register new user
 const register = async (userData) => {
-  const res = await http.post(`${API_URL}/register`, userData);
+  const res = await http.post(`${API_URL}/register`, userData, {
+    withCredentials: true,
+  });
   return res.data;
 };
 
-// Login user and store token + user
+// Login user (cookie automatically set by backend)
 const login = async (credentials) => {
-  const res = await http.post(`${API_URL}/login`, credentials);
-  const { token, user } = res.data;
+  const res = await http.post(`${API_URL}/login`, credentials, {
+    withCredentials: true,
+  });
 
-  console.log("Token:", token);
-  console.log("User:", user);
+  const { user } = res.data;
+  if (!user) throw new Error("Login failed: Missing user");
 
-  if (!token || !user) throw new Error("Login failed: Missing user/token");
-
-  localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
-
-  return { token, user };
+  return { user };
 };
 
-// Logout user
-const logout = () => {
+// Logout (clear cookie)
+const logout = async () => {
+  await http.post(`${API_URL}/logout`, {}, { withCredentials: true });
   localStorage.removeItem("user");
-  localStorage.removeItem("token");
 };
 
-// Get currently logged-in user
+// Get current user from localStorage
 const getCurrentUser = () => {
   try {
     const userStr = localStorage.getItem("user");
     return userStr ? JSON.parse(userStr) : null;
   } catch (e) {
+    console.log(e.message);
     localStorage.removeItem("user");
-    console.error("Failed to parse user from localStorage:", e);
     return null;
   }
 };
 
-// Get stored JWT token
-const getToken = () => {
-  return localStorage.getItem("token");
-};
-
-// Fetch user profile + cargos
+// Get profile from backend (with cookie)
 const getProfile = async () => {
-  const res = await http.get(`${USER_URL}/profile`);
+  const res = await http.get(`${USER_URL}/profile`, {
+    withCredentials: true,
+  });
   return res.data;
 };
 
-// Update user profile (contact, address) + get updated profile + cargos
 const updateProfile = async (profileData) => {
-  const res = await http.put(`${USER_URL}/profile/update`, profileData);
+  const res = await http.put(`${USER_URL}/profile/update`, profileData, {
+    withCredentials: true,
+  });
   return res.data;
 };
 
@@ -65,7 +62,6 @@ export default {
   login,
   logout,
   getCurrentUser,
-  getToken,
   getProfile,
   updateProfile,
 };

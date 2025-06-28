@@ -1,2 +1,5 @@
 @import 'tailwindcss';
 
+.homepage{
+    background-image: url(../public/banner1.jpg);
+}

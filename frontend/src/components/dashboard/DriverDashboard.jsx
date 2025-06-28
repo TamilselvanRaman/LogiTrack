@@ -1,81 +1,72 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaTruck, FaSearch, FaHome } from "react-icons/fa";
 import ManageDeliveries from "../cargo/ManageDeliveries";
 import ViewCargoStatus from "../cargo/ViewCargoStatus";
-import { FaTruck, FaSearch, FaHome } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 const DriverDashboard = () => {
-  const [activeTab, setActiveTab] = useState("manage");
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("deliveries");
+  const { user } = useAuth();
 
-  const renderActiveTab = () => {
+  const renderTabContent = () => {
     switch (activeTab) {
-      case "manage":
-        return (
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
-            <h3 className="text-2xl font-semibold mb-4 text-blue-600 border-b border-gray-200 pb-2">
-              Manage Assigned Deliveries
-            </h3>
-            <ManageDeliveries />
-          </div>
-        );
+      case "deliveries":
+        return <ManageDeliveries />;
       case "track":
-        return (
-          <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
-            <h3 className="text-2xl font-semibold mb-4 text-blue-600 border-b border-gray-200 pb-2">
-              Track Cargo
-            </h3>
-            <ViewCargoStatus />
-          </div>
-        );
+        return <ViewCargoStatus />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800 relative">
-      <main className="flex-1 px-4 py-10 sm:px-6 max-w-6xl mx-auto w-full">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center text-blue-700 mb-10">
-          Driver Dashboard
-        </h2>
+    <div className="min-h-screen flex flex-col items-center px-4 py-10 font-sans">
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-blue-700 mb-2">
+          Welcome, {user?.username || "Driver"}!
+        </h1>
+        <p className="text-gray-600 text-sm">
+          Manage and track your deliveries with ease.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {renderActiveTab()}
-        </div>
-      </main>
+      {/* Tabs */}
+      <div className="flex flex-wrap justify-center gap-4 mb-10">
+        <button
+          onClick={() => setActiveTab("deliveries")}
+          className={`px-6 py-2 rounded-full text-sm font-semibold border transition-all duration-300 ${
+            activeTab === "deliveries"
+              ? "bg-blue-600 text-white shadow"
+              : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+          }`}
+        >
+          <FaTruck className="inline mr-2 mb-1" />
+          My Deliveries
+        </button>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white shadow md:hidden flex justify-around py-2 border-t z-40">
-        <MobileNavIcon
-          icon={<FaTruck />}
-          label="Deliveries"
-          active={activeTab === "manage"}
-          onClick={() => setActiveTab("manage")}
-        />
-        <MobileNavIcon
-          icon={<FaSearch />}
-          label="Track"
-          active={activeTab === "track"}
+        <button
           onClick={() => setActiveTab("track")}
-        />
-      </nav>
+          className={`px-6 py-2 rounded-full text-sm font-semibold border transition-all duration-300 ${
+            activeTab === "track"
+              ? "bg-blue-600 text-white shadow"
+              : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+          }`}
+        >
+          <FaSearch className="inline mr-2 mb-1" />
+          Track Cargo
+        </button>
+      </div>
 
-      {/* Back to Home Button - Mobile */}
+      {/* Main Container */}
+      <div className="w-full max-w-3xl ">{renderTabContent()}</div>
+
+      {/* Home Button */}
       <button
         onClick={() => navigate("/")}
-        className="fixed bottom-16 left-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm md:hidden"
-      >
-        <div className="flex items-center gap-2">
-          <FaHome />
-          Home
-        </div>
-      </button>
-
-      {/* Back to Home Button - Desktop */}
-      <button
-        onClick={() => navigate("/")}
-        className="hidden md:flex items-center gap-2 fixed bottom-6 left-6 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition"
+        className="fixed bottom-6 left-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
       >
         <FaHome />
         Home
@@ -83,17 +74,5 @@ const DriverDashboard = () => {
     </div>
   );
 };
-
-const MobileNavIcon = ({ icon, label, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex flex-col items-center text-xs ${
-      active ? "text-blue-600 font-semibold" : "text-gray-600"
-    }`}
-  >
-    <div className="text-lg">{icon}</div>
-    {label}
-  </button>
-);
 
 export default DriverDashboard;

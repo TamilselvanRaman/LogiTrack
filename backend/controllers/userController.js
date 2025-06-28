@@ -96,3 +96,37 @@ exports.updateUserProfile = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+// ✅ GET /api/users/customers
+exports.getAllCustomers = async (req, res) => {
+  try {
+    const customers = await User.find({ role: "customer" }).select(
+      "username _id"
+    );
+    res.status(200).json(customers);
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    res.status(500).json({ message: "Server error while fetching customers." });
+  }
+};
+
+// ✅ NEW: Get cargos assigned to logged-in customer
+exports.getCustomerCargos = async (req, res) => {
+  try {
+    // Check if user is a customer
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ msg: "Access denied. Customers only." });
+    }
+
+    // Find cargos where the customerId matches the logged-in user
+    const cargos = await Cargo.find({ customerId: req.user.id })
+      .populate("driverId", "username") // Populate driver's username
+      .populate("businessId", "username") // Populate business's username
+      .sort({ createdAt: -1 }); // Optional: newest first
+
+    res.status(200).json(cargos);
+  } catch (err) {
+    console.error("Error fetching customer cargos:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

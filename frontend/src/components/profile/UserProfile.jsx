@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // For navigation
+import { useNavigate } from "react-router-dom";
 import authService from "../../services/auth.service";
+import { getAllCargoRequests } from "../../services/customer.service"; // ✅ Add this line
 
 const UserProfile = () => {
   const navigate = useNavigate();
-
   const [user, setUser] = useState(null);
   const [cargos, setCargos] = useState([]);
   const [formData, setFormData] = useState({
@@ -25,13 +25,23 @@ const UserProfile = () => {
       try {
         const data = await authService.getProfile();
         setUser(data.user);
-        setCargos(data.cargos || []);
         setFormData({
           username: data.user.username || "",
           email: data.user.email || "",
           contact: data.user.contact || "",
           address: data.user.address || "",
         });
+
+        // ✅ Fetch based on role
+        if (data.user.role === "customer") {
+          const requests = await getAllCargoRequests();
+          const customerCargos = requests.filter(
+            (r) => r.customerId === data.user._id
+          );
+          setCargos(customerCargos);
+        } else {
+          setCargos(data.cargos || []);
+        }
       } catch (err) {
         setError("Failed to load profile.");
         console.error(err);
@@ -39,11 +49,22 @@ const UserProfile = () => {
         setLoading(false);
       }
     };
-
     fetchProfile();
   }, []);
 
-  // Sort cargos: active first (status === "current" or "active"), then others
+  const getCargoTitle = (role) => {
+    switch (role) {
+      case "business":
+        return "Your Cargos";
+      case "driver":
+        return "Assigned Deliveries";
+      case "customer":
+        return "Your Requested Cargo";
+      default:
+        return "Cargo Information";
+    }
+  };
+
   const sortedCargos = [...cargos].sort((a, b) => {
     const activeStatus = ["current", "active"];
     const aIsActive = activeStatus.includes(a.status?.toLowerCase());
@@ -74,7 +95,6 @@ const UserProfile = () => {
     e.preventDefault();
     setUpdating(true);
     setError(null);
-
     try {
       const data = await authService.updateProfile(formData);
       setUser(data.user);
@@ -91,27 +111,18 @@ const UserProfile = () => {
 
   if (loading)
     return (
-      <p className="text-center mt-20 text-gray-600 font-medium tracking-wide">
-        Loading profile...
-      </p>
+      <p className="text-center mt-20 text-gray-600">Loading profile...</p>
     );
-  if (error)
-    return (
-      <p className="text-center mt-20 text-red-600 font-semibold tracking-wide">
-        {error}
-      </p>
-    );
+  if (error) return <p className="text-center mt-20 text-red-600">{error}</p>;
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 font-sans">
-      {/* Left Side: Profile */}
+      {/* Profile Section */}
       <section className="w-full md:w-2/3 lg:w-1/2 mx-auto p-8 bg-white shadow-xl rounded-2xl flex flex-col space-y-8">
-        {/* Header */}
         <div className="flex items-center justify-between border-b pb-4">
           <h1 className="text-3xl font-extrabold tracking-tight text-indigo-900">
             User Profile
           </h1>
-
           <button
             onClick={handleEditToggle}
             className="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md text-indigo-600 font-semibold hover:bg-indigo-600 hover:text-white transition"
@@ -120,7 +131,6 @@ const UserProfile = () => {
           </button>
         </div>
 
-        {/* Display or Form Section */}
         {!editing ? (
           <div className="flex flex-col space-y-4 text-gray-800 text-base">
             {[
@@ -141,12 +151,7 @@ const UserProfile = () => {
             ))}
           </div>
         ) : (
-          <form
-            onSubmit={handleUpdate}
-            className="space-y-6"
-            noValidate
-            autoComplete="off"
-          >
+          <form onSubmit={handleUpdate} className="space-y-6">
             {[
               {
                 label: "Username",
@@ -167,7 +172,7 @@ const UserProfile = () => {
                   onChange={handleChange}
                   disabled={updating}
                   required={required}
-                  className="block py-2.5 px-0 w-full text-lg text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-indigo-600 peer"
+                  className="block py-2.5 px-0 w-full text-lg text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 focus:outline-none focus:ring-0 focus:border-indigo-600 peer"
                   placeholder=" "
                 />
                 <label
@@ -193,7 +198,7 @@ const UserProfile = () => {
           </form>
         )}
 
-        {/* Navigation Buttons */}
+        {/* Navigation */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <button
             onClick={() => navigate("/dashboard")}
@@ -210,41 +215,50 @@ const UserProfile = () => {
         </div>
       </section>
 
-      {/* Right Side: Cargos */}
+      {/* Cargo Requests / Deliveries */}
+      {/* Cargo Requests / Deliveries */}
       <section className="w-full md:w-1/2 p-8 overflow-y-auto bg-indigo-50">
         <h2 className="text-4xl font-extrabold text-indigo-900 mb-12 border-b-4 border-indigo-600 pb-3">
-          {user.role === "business" ? "Your Cargos" : "Assigned Cargos"}
+          {getCargoTitle(user.role)}
         </h2>
 
         {sortedCargos.length === 0 ? (
           <p className="italic text-indigo-700 text-lg">No cargos found.</p>
         ) : (
-          <div className="space-y-6">
-            {sortedCargos.map((cargo) => (
-              <div
-                key={cargo._id}
-                className={`bg-white rounded-xl shadow-md p-6 border ${
-                  ["current", "active"].includes(cargo.status?.toLowerCase())
-                    ? "border-indigo-600"
-                    : "border-gray-300"
-                }`}
-              >
-                <h3 className="text-2xl font-semibold text-indigo-700 mb-3">
-                  {cargo.name}
-                </h3>
-                <p className="text-gray-700 mb-2">
-                  <span className="font-semibold">Status:</span>{" "}
-                  <span className="capitalize">{cargo.status || "N/A"}</span>
-                </p>
-                <p className="text-gray-700 mb-1">
-                  <span className="font-semibold">Origin:</span> {cargo.origin}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-semibold">Destination:</span>{" "}
-                  {cargo.destination}
-                </p>
-              </div>
-            ))}
+          <div className="overflow-x-auto rounded-xl shadow border border-indigo-200 bg-white">
+            <table className="min-w-full text-sm text-left text-indigo-900">
+              <thead className="bg-indigo-100 text-indigo-700 uppercase text-xs font-semibold">
+                <tr>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Origin</th>
+                  <th className="px-4 py-3">Destination</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedCargos.map((cargo) => (
+                  <tr
+                    key={cargo._id}
+                    className="border-t hover:bg-indigo-50 transition duration-150"
+                  >
+                    <td className="px-4 py-3 font-medium">{cargo.name}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          cargo.status?.toLowerCase() === "delivered"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {cargo.status || "PENDING"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">{cargo.origin}</td>
+                    <td className="px-4 py-3">{cargo.destination}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
